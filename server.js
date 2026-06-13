@@ -14,10 +14,10 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/worker', require('./routes/worker'));
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Task Platform Server Running on Port 3000' });
+  res.json({ message: 'Task Platform Server Running' });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://139.59.117.199:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
