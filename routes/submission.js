@@ -42,7 +42,12 @@ router.get('/pending', isAuthenticated, async (req, res) => {
 router.post('/approve/:submissionId', isAuthenticated, async (req, res) => {
   try {
     const submission = await Submission.findByIdAndUpdate(req.params.submissionId, { status: 'approved' }, { new: true });
-    res.json({ success: true, message: 'Approved!', submission });
+    const task = await Task.findById(submission.taskId);
+    const User = require('../models/User');
+    const worker = await User.findById(submission.workerId);
+    worker.walletBalance += task.budget;
+    await worker.save();
+    res.json({ success: true, message: 'Approved! Balance add ho gaya!', submission });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
