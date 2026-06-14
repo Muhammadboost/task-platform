@@ -2,7 +2,7 @@ const Task = require('../models/Task');
 
 exports.getPendingTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ adminApproved: false });
+    const tasks = await Task.find({ adminApproved: false, status: { $ne: 'rejected' } });
     res.json({ success: true, tasks });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -12,7 +12,12 @@ exports.getPendingTasks = async (req, res) => {
 exports.approveTask = async (req, res) => {
   try {
     const { taskId } = req.params;
-    const task = await Task.findByIdAndUpdate(taskId, { adminApproved: true }, { new: true });
+    const { commissionRate } = req.body;
+    const updateData = { adminApproved: true, status: 'open' };
+    if (commissionRate !== undefined) {
+      updateData.commissionRate = Number(commissionRate);
+    }
+    const task = await Task.findByIdAndUpdate(taskId, updateData, { new: true });
     res.json({ success: true, message: 'Task approved', task });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
