@@ -1,9 +1,14 @@
 const Task = require('../models/Task');
 const Submission = require('../models/Submission');
+const User = require('../models/User');
 
 exports.getAvailableTasks = async (req, res) => {
   try {
-    const claimedTasks = await Submission.find({ workerId: req.user.id }).select('taskId');
+const workerUser = await User.findById(req.user.id);
+if (!workerUser.isApproved) {
+  return res.status(403).json({ success: false, message: 'Your account is pending approval!' });
+} 
+   const claimedTasks = await Submission.find({ workerId: req.user.id }).select('taskId');
     const claimedTaskIds = claimedTasks.map(s => s.taskId.toString());
     const tasks = await Task.find({
       status: 'open',
