@@ -36,7 +36,7 @@ exports.login = async (req, res) => {
     if (!user) return res.status(400).json({ success: false, message: 'User not found' });
     const isMatch = await user.matchPassword(password);
 if (!user.isActive) return res.status(403).json({ success: false, message: 'Your account has been blocked. Contact admin.' });
-if (!user.isApproved && user.role !== 'admin') return res.status(403).json({ success: false, message: 'Your account is pending approval. Please wait for admin approval.' });
+if (!user.isApproved && user.role !== 'admin' && user.role !== 'subadmin') return res.status(403).json({ success: false, message: 'Your account is pending approval. Please wait for admin approval.' });
     if (!isMatch) return res.status(400).json({ success: false, message: 'Wrong password' });
     const token = generateToken(user._id);
     res.json({ success: true, message: 'Login successful', token, user: { id: user._id, name: user.name, email: user.email, role: user.role, redditUsernames: user.redditUsernames } });
