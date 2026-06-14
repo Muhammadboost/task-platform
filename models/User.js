@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['admin', 'client', 'worker'], required: true },
   phone: String,
-redditUsername: { type: String },
+redditUsernames: [{ type: String }],
   profileImage: String,
   walletBalance: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
