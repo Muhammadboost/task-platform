@@ -10,7 +10,7 @@ router.post('/reject-task/:taskId', isAuthenticated, rejectTask);
 router.get('/all-workers', isAuthenticated, async (req, res) => {
   try {
     const User = require('../models/User');
-    const workers = await User.find({ role: 'worker' }).select('name email redditUsername isActive');
+    const workers = await User.find({ role: 'worker' }).select('name email redditUsernames isActive');
     res.json({ success: true, workers });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -35,15 +35,6 @@ router.post('/update-reddit/:userId', isAuthenticated, async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
-  try {
-    const User = require('../models/User');
-    const { redditUsername } = req.body;
-    await User.findByIdAndUpdate(req.params.userId, { redditUsername });
-    res.json({ success: true, message: 'Reddit username updated!' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
 
 router.post('/block-worker/:userId', isAuthenticated, async (req, res) => {
   try {
@@ -55,4 +46,5 @@ router.post('/block-worker/:userId', isAuthenticated, async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
 module.exports = router;
