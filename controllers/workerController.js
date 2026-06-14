@@ -8,7 +8,7 @@ exports.getAvailableTasks = async (req, res) => {
     const tasks = await Task.find({
       status: 'open',
       adminApproved: true,
-      $expr: { $lt: ['$completedCount', '$workerLimit'] }
+      $expr: { $lt: [{ $add: ['$completedCount', { $ifNull: ['$claimedCount', 0] }] }, '$workerLimit'] }
     });
     const availableTasks = tasks.filter(t => !claimedTaskIds.includes(t._id.toString()));
     res.json({ success: true, count: availableTasks.length, tasks: availableTasks });
@@ -27,7 +27,8 @@ exports.claimTask = async (req, res) => {
     }
     const existing = await Submission.findOne({ taskId, workerId: req.user.id });
     if (existing) return res.status(400).json({ success: false, message: 'Already claimed!' });
-    const submission = await Submission.create({
+await Task.findByIdAndUpdate(taskId, { $inc: { claimedCount: 1 } }); 
+   const submission = await Submission.create({
       taskId,
       workerId: req.user.id,
       status: 'claimed',

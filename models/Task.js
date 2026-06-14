@@ -14,6 +14,7 @@ currency: { type: String, enum: ['USD', 'PKR'], default: 'USD' },
 exchangeRate: { type: Number, default: 280 },
 commissionRate: { type: Number, default: 50 },
 completedCount: { type: Number, default: 0 },
+claimedCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 
