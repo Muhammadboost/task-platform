@@ -9,8 +9,19 @@ router.post('/submit/:taskId', isAuthenticated, async (req, res) => {
   try {
     const { description, proofFiles } = req.body;
 const existing = await Submission.findOne({ taskId: req.params.taskId, workerId: req.user.id });
-if (existing) {
+if (existing && existing.status !== 'claimed') {
   return res.status(400).json({ success: false, message: 'You have already submitted this task!' });
+}
+if (existing && existing.status === 'claimed') {
+  existing.description = description;
+  existing.proofFiles = proofFiles || [];
+  existing.status = 'submitted';
+  await existing.save();
+  const taskData = await Task.findById(req.params.taskId);
+  const newCount = (taskData.completedCount || 0) + 1;
+  const newStatus = newCount >= taskData.workerLimit ? 'completed' : 'open';
+  await Task.findByIdAndUpdate(req.params.taskId, { completedCount: newCount, status: newStatus });
+  return res.json({ success: true, message: 'Work submitted!', submission: existing });
 }
     const submission = await Submission.create({
       taskId: req.params.taskId,
