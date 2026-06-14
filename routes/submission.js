@@ -8,21 +8,24 @@ const router = express.Router();
 router.post('/submit/:taskId', isAuthenticated, async (req, res) => {
   try {
     const { description, proofFiles } = req.body;
-const existing = await Submission.findOne({ taskId: req.params.taskId, workerId: req.user.id });
-if (existing && existing.status !== 'claimed') {
-  return res.status(400).json({ success: false, message: 'You have already submitted this task!' });
-}
-if (existing && existing.status === 'claimed') {
-  existing.description = description;
-  existing.proofFiles = proofFiles || [];
-  existing.status = 'submitted';
-  await existing.save();
-  const taskData = await Task.findById(req.params.taskId);
-  const newCount = (taskData.completedCount || 0) + 1;
-  const newStatus = newCount >= taskData.workerLimit ? 'completed' : 'open';
-  await Task.findByIdAndUpdate(req.params.taskId, { completedCount: newCount, status: newStatus });
-  return res.json({ success: true, message: 'Work submitted!', submission: existing });
-}
+    const existing = await Submission.findOne({ taskId: req.params.taskId, workerId: req.user.id });
+    if (existing && existing.status === 'submitted') {
+      return res.status(400).json({ success: false, message: 'You have already submitted this task!' });
+    }
+    if (existing && existing.status === 'approved') {
+      return res.status(400).json({ success: false, message: 'Task already approved!' });
+    }
+    if (existing && existing.status === 'claimed') {
+      existing.description = description;
+      existing.proofFiles = proofFiles || [];
+      existing.status = 'submitted';
+      await existing.save();
+      const taskData = await Task.findById(req.params.taskId);
+      const newCount = (taskData.completedCount || 0) + 1;
+      const newStatus = newCount >= taskData.workerLimit ? 'completed' : 'open';
+      await Task.findByIdAndUpdate(req.params.taskId, { completedCount: newCount, status: newStatus });
+      return res.json({ success: true, message: 'Work submitted!', submission: existing });
+    }
     const submission = await Submission.create({
       taskId: req.params.taskId,
       workerId: req.user.id,
@@ -31,9 +34,9 @@ if (existing && existing.status === 'claimed') {
       status: 'submitted'
     });
     const taskData = await Task.findById(req.params.taskId);
-const newCount = (taskData.completedCount || 0) + 1;
-const newStatus = newCount >= taskData.workerLimit ? 'completed' : 'open';
-await Task.findByIdAndUpdate(req.params.taskId, { completedCount: newCount, status: newStatus });
+    const newCount = (taskData.completedCount || 0) + 1;
+    const newStatus = newCount >= taskData.workerLimit ? 'completed' : 'open';
+    await Task.findByIdAndUpdate(req.params.taskId, { completedCount: newCount, status: newStatus });
     res.json({ success: true, message: 'Work submitted!', submission });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -51,7 +54,7 @@ router.get('/my-submissions', isAuthenticated, async (req, res) => {
 
 router.get('/pending', isAuthenticated, async (req, res) => {
   try {
-    const submissions = await Submission.find({ status: 'submitted' }).populate('taskId', 'title budget').populate('workerId', 'name email redditUsernames')
+    const submissions = await Submission.find({ status: 'submitted' }).populate('taskId', 'title budget').populate('workerId', 'name email redditUsernames');
     res.json({ success: true, submissions });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -72,11 +75,11 @@ router.post('/approve/:submissionId', isAuthenticated, async (req, res) => {
     console.log('Worker balance before:', worker ? worker.walletBalance : 'worker not found');
     if (worker && task) {
       let workerAmount = task.budget;
-if (task.currency === 'USD') {
-  workerAmount = task.budget * (task.exchangeRate || 280);
-}
-workerAmount = Math.floor(workerAmount * ((100 - (task.commissionRate || 50)) / 100));
-worker.walletBalance = (worker.walletBalance || 0) + workerAmount;
+      if (task.currency === 'USD') {
+        workerAmount = task.budget * (task.exchangeRate || 250);
+      }
+      workerAmount = Math.floor(workerAmount * ((100 - (task.commissionRate || 50)) / 100));
+      worker.walletBalance = (worker.walletBalance || 0) + workerAmount;
       await worker.save();
       console.log('Worker balance after:', worker.walletBalance);
     }
@@ -94,6 +97,10 @@ router.post('/reject/:submissionId', isAuthenticated, async (req, res) => {
       { status: 'rejected' },
       { new: true }
     );
+    await Task.findByIdAndUpdate(submission.taskId, {
+      $inc: { claimedCount: -1, completedCount: -1 },
+      status: 'open'
+    });
     res.json({ success: true, message: 'Rejected!', submission });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
