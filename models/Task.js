@@ -9,6 +9,8 @@ const taskSchema = new mongoose.Schema({
   assignedWorkerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   deadline: Date,
   adminApproved: { type: Boolean, default: false },
+workerLimit: { type: Number, default: 1 },
+completedCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 

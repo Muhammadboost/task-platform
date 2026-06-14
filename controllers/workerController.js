@@ -1,8 +1,13 @@
 const Task = require('../models/Task');
+const Submission = require('../models/Submission');
 
 exports.getAvailableTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ status: 'open', adminApproved: true, assignedWorkerId: null });
+    const tasks = await Task.find({ 
+      status: 'open', 
+      adminApproved: true,
+      $expr: { $lt: ['$completedCount', '$workerLimit'] }
+    });
     res.json({ success: true, count: tasks.length, tasks });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

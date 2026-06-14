@@ -15,7 +15,10 @@ router.post('/submit/:taskId', isAuthenticated, async (req, res) => {
       proofFiles: proofFiles || [],
       status: 'submitted'
     });
-    await Task.findByIdAndUpdate(req.params.taskId, { status: 'completed' });
+    const taskData = await Task.findById(req.params.taskId);
+const newCount = (taskData.completedCount || 0) + 1;
+const newStatus = newCount >= taskData.workerLimit ? 'completed' : 'open';
+await Task.findByIdAndUpdate(req.params.taskId, { completedCount: newCount, status: newStatus });
     res.json({ success: true, message: 'Work submitted!', submission });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
