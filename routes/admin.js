@@ -46,39 +46,60 @@ router.post('/block-worker/:userId', isAuthenticated, async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
 router.get('/earnings', isAuthenticated, async (req, res) => {
   try {
     const Task = require('../models/Task');
     const User = require('../models/User');
+    const Payment = require('../models/Payment');
     const tasks = await Task.find({ adminApproved: true });
     const clients = await User.find({ role: 'client' }).select('name email');
-    
+    const workers = await User.find({ role: 'worker' }).select('name email walletBalance');
+    const paidPayments = await Payment.find({ status: 'paid' });
+
     let totalCommission = 0;
     let clientBilling = [];
 
     for (let client of clients) {
       const clientTasks = tasks.filter(t => t.clientId.toString() === client._id.toString());
-      const totalBill = clientTasks.reduce((sum, t) => sum + (t.budget * (t.workerLimit || 1)), 0);
-      const delivered = clientTasks.reduce((sum, t) => sum + (t.budget * (t.completedCount || 0)), 0);
+      const totalBillUSD = clientTasks.reduce((sum, t) => sum + (t.budget * (t.workerLimit || 1)), 0);
+      const deliveredUSD = clientTasks.reduce((sum, t) => sum + (t.budget * (t.completedCount || 0)), 0);
+      const totalBillPKR = clientTasks.reduce((sum, t) => {
+        const amount = t.currency === 'USD' ? t.budget * (t.exchangeRate || 250) : t.budget;
+        return sum + (amount * (t.workerLimit || 1));
+      }, 0);
+      const deliveredPKR = clientTasks.reduce((sum, t) => {
+        const amount = t.currency === 'USD' ? t.budget * (t.exchangeRate || 250) : t.budget;
+        return sum + (amount * (t.completedCount || 0));
+      }, 0);
       const commission = clientTasks.reduce((sum, t) => {
         const amount = t.currency === 'USD' ? t.budget * (t.exchangeRate || 250) : t.budget;
         return sum + (amount * (t.completedCount || 0) * ((t.commissionRate || 50) / 100));
       }, 0);
+      const workersPaid = deliveredPKR - commission;
       totalCommission += commission;
       if (clientTasks.length > 0) {
         clientBilling.push({
           name: client.name,
           email: client.email,
           totalTasks: clientTasks.length,
-          totalBill: totalBill.toFixed(2),
-          delivered: delivered.toFixed(2),
-          pending: (totalBill - delivered).toFixed(2),
+          totalBillUSD: totalBillUSD.toFixed(2),
+          deliveredUSD: deliveredUSD.toFixed(2),
+          pendingUSD: (totalBillUSD - deliveredUSD).toFixed(2),
+          totalBillPKR: Math.floor(totalBillPKR),
+          deliveredPKR: Math.floor(deliveredPKR),
+          workersPaid: Math.floor(workersPaid),
           commission: Math.floor(commission)
         });
       }
     }
 
-    res.json({ success: true, totalCommission: Math.floor(totalCommission), clientBilling });
+    const workerStats = workers.map(w => {
+      const paid = paidPayments.filter(p => p.workerId.toString() === w._id.toString()).reduce((sum, p) => sum + p.amount, 0);
+      return { name: w.name, email: w.email, currentBalance: w.walletBalance || 0, totalWithdrawn: paid };
+    }).filter(w => w.currentBalance > 0 || w.totalWithdrawn > 0);
+
+    res.json({ success: true, totalCommission: Math.floor(totalCommission), clientBilling, workerStats });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
