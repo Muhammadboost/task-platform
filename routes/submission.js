@@ -8,6 +8,10 @@ const router = express.Router();
 router.post('/submit/:taskId', isAuthenticated, async (req, res) => {
   try {
     const { description, proofFiles } = req.body;
+const existing = await Submission.findOne({ taskId: req.params.taskId, workerId: req.user.id });
+if (existing) {
+  return res.status(400).json({ success: false, message: 'You have already submitted this task!' });
+}
     const submission = await Submission.create({
       taskId: req.params.taskId,
       workerId: req.user.id,

@@ -4,6 +4,9 @@ const { generateToken } = require('../middleware/auth');
 exports.signup = async (req, res) => {
   try {
     const { name, email, password, role, phone, redditUsername } = req.body;
+if (role === 'worker' && !phone) {
+  return res.status(400).json({ success: false, message: 'Phone number is required for workers!' });
+}
     if (role === 'worker' && !redditUsername) {
       return res.status(400).json({ success: false, message: 'Reddit username is required for workers!' });
     }
