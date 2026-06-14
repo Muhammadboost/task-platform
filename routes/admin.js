@@ -105,5 +105,23 @@ router.post('/reject-user/:userId', isAuthenticated, async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+router.post('/create-subadmin', isAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const { name, email, password } = req.body;
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ success: false, message: 'Email already exists!' });
+    const user = new User({
+      name, email, password,
+      role: 'subadmin',
+      isApproved: true,
+      isActive: true
+    });
+    await user.save();
+    res.json({ success: true, message: 'Sub-admin created!' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 module.exports = router;
