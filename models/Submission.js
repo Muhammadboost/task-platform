@@ -5,7 +5,7 @@ const submissionSchema = new mongoose.Schema({
   workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   proofFiles: [String],
   description: String,
-  status: { type: String, enum: ['submitted', 'approved', 'rejected'], default: 'submitted' },
+status: { type: String, enum: ['claimed', 'submitted', 'approved', 'rejected'], default: 'submitted' },
   submittedAt: { type: Date, default: Date.now }
 });
 

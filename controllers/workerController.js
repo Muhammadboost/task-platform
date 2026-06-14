@@ -3,12 +3,15 @@ const Submission = require('../models/Submission');
 
 exports.getAvailableTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ 
-      status: 'open', 
+    const claimedTasks = await Submission.find({ workerId: req.user.id }).select('taskId');
+    const claimedTaskIds = claimedTasks.map(s => s.taskId.toString());
+    const tasks = await Task.find({
+      status: 'open',
       adminApproved: true,
       $expr: { $lt: ['$completedCount', '$workerLimit'] }
     });
-    res.json({ success: true, count: tasks.length, tasks });
+    const availableTasks = tasks.filter(t => !claimedTaskIds.includes(t._id.toString()));
+    res.json({ success: true, count: availableTasks.length, tasks: availableTasks });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -17,8 +20,21 @@ exports.getAvailableTasks = async (req, res) => {
 exports.claimTask = async (req, res) => {
   try {
     const { taskId } = req.params;
-    const task = await Task.findByIdAndUpdate(taskId, { assignedWorkerId: req.user.id, status: 'in_progress' }, { new: true });
-    res.json({ success: true, message: 'Task claimed successfully', task });
+    const task = await Task.findById(taskId);
+    if (!task) return res.status(404).json({ success: false, message: 'Task not found!' });
+    if (task.completedCount >= task.workerLimit) {
+      return res.status(400).json({ success: false, message: 'Task limit full!' });
+    }
+    const existing = await Submission.findOne({ taskId, workerId: req.user.id });
+    if (existing) return res.status(400).json({ success: false, message: 'Already claimed!' });
+    const submission = await Submission.create({
+      taskId,
+      workerId: req.user.id,
+      status: 'claimed',
+      description: '',
+      proofFiles: []
+    });
+    res.json({ success: true, message: 'Task claimed!', submission });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -26,8 +42,8 @@ exports.claimTask = async (req, res) => {
 
 exports.getMyTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ assignedWorkerId: req.user.id });
-    res.json({ success: true, tasks });
+    const submissions = await Submission.find({ workerId: req.user.id }).populate('taskId');
+    res.json({ success: true, tasks: submissions });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
