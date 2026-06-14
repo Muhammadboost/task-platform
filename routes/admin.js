@@ -76,5 +76,34 @@ router.get('/earnings', isAuthenticated, async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+router.get('/pending-users', isAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const users = await User.find({ isApproved: false, role: { $ne: 'admin' } }).select('name email role phone redditUsernames createdAt');
+    res.json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.post('/approve-user/:userId', isAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    await User.findByIdAndUpdate(req.params.userId, { isApproved: true });
+    res.json({ success: true, message: 'User approved!' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.post('/reject-user/:userId', isAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    await User.findByIdAndUpdate(req.params.userId, { isApproved: false, isActive: false });
+    res.json({ success: true, message: 'User rejected!' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 module.exports = router;

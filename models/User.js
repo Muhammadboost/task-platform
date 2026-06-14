@@ -11,6 +11,7 @@ redditUsernames: [{ type: String }],
   profileImage: String,
   walletBalance: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
+isApproved: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 

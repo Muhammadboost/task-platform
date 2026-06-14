@@ -7,6 +7,10 @@ exports.signup = async (req, res) => {
 if (role === 'worker' && !phone) {
   return res.status(400).json({ success: false, message: 'Phone number is required for workers!' });
 }
+const existingUser = await User.findOne({ email });
+if (existingUser) {
+  return res.status(400).json({ success: false, message: 'Email already registered!' });
+}
     if (role === 'worker' && !redditUsername) {
       return res.status(400).json({ success: false, message: 'Reddit username is required for workers!' });
     }
@@ -29,6 +33,7 @@ exports.login = async (req, res) => {
     if (!user) return res.status(400).json({ success: false, message: 'User not found' });
     const isMatch = await user.matchPassword(password);
 if (!user.isActive) return res.status(403).json({ success: false, message: 'Your account has been blocked. Contact admin.' });
+if (!user.isApproved && user.role !== 'admin') return res.status(403).json({ success: false, message: 'Your account is pending approval. Please wait for admin approval.' });
     if (!isMatch) return res.status(400).json({ success: false, message: 'Wrong password' });
     const token = generateToken(user._id);
     res.json({ success: true, message: 'Login successful', token, user: { id: user._id, name: user.name, email: user.email, role: user.role, redditUsernames: user.redditUsernames } });
