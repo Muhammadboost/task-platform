@@ -56,7 +56,12 @@ router.post('/approve/:submissionId', isAuthenticated, async (req, res) => {
     const worker = await User.findById(submission.workerId);
     console.log('Worker balance before:', worker ? worker.walletBalance : 'worker not found');
     if (worker && task) {
-      worker.walletBalance = (worker.walletBalance || 0) + task.budget;
+      let workerAmount = task.budget;
+if (task.currency === 'USD') {
+  workerAmount = task.budget * (task.exchangeRate || 280);
+}
+workerAmount = Math.floor(workerAmount * ((100 - (task.commissionRate || 50)) / 100));
+worker.walletBalance = (worker.walletBalance || 0) + workerAmount;
       await worker.save();
       console.log('Worker balance after:', worker.walletBalance);
     }
