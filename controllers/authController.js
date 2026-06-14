@@ -18,9 +18,12 @@ if (existingUser) {
     if (existingReddit) {
       return res.status(400).json({ success: false, message: 'This Reddit account is already registered!' });
     }
-    const user = await User.create({ name, email, password, role, phone, redditUsernames: redditUsername ? [redditUsername] : [] });
-    const token = generateToken(user._id);
-    res.status(201).json({ success: true, message: 'Account created', token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+const user = await User.create({ name, email, password, role, phone, redditUsernames: redditUsername ? [redditUsername] : [] });
+if (role !== 'admin') {
+  return res.status(201).json({ success: true, pending: true, message: 'Account created! Please wait for admin approval before logging in.' });
+}
+const token = generateToken(user._id);
+res.status(201).json({ success: true, message: 'Account created', token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
