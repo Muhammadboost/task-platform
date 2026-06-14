@@ -2,6 +2,7 @@ const express = require('express');
 const { isAuthenticated } = require('../middleware/auth');
 const Submission = require('../models/Submission');
 const Task = require('../models/Task');
+const User = require('../models/User');
 const router = express.Router();
 
 router.post('/submit/:taskId', isAuthenticated, async (req, res) => {
@@ -41,21 +42,35 @@ router.get('/pending', isAuthenticated, async (req, res) => {
 
 router.post('/approve/:submissionId', isAuthenticated, async (req, res) => {
   try {
-    const submission = await Submission.findByIdAndUpdate(req.params.submissionId, { status: 'approved' }, { new: true });
+    const submission = await Submission.findByIdAndUpdate(
+      req.params.submissionId,
+      { status: 'approved' },
+      { new: true }
+    );
+    console.log('Submission:', JSON.stringify(submission));
     const task = await Task.findById(submission.taskId);
-    const User = require('../models/User');
+    console.log('Task budget:', task ? task.budget : 'task not found');
     const worker = await User.findById(submission.workerId);
-    worker.walletBalance += task.budget;
-    await worker.save();
+    console.log('Worker balance before:', worker ? worker.walletBalance : 'worker not found');
+    if (worker && task) {
+      worker.walletBalance = (worker.walletBalance || 0) + task.budget;
+      await worker.save();
+      console.log('Worker balance after:', worker.walletBalance);
+    }
     res.json({ success: true, message: 'Approved! Balance add ho gaya!', submission });
   } catch (error) {
+    console.log('ERROR:', error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
 router.post('/reject/:submissionId', isAuthenticated, async (req, res) => {
   try {
-    const submission = await Submission.findByIdAndUpdate(req.params.submissionId, { status: 'rejected' }, { new: true });
+    const submission = await Submission.findByIdAndUpdate(
+      req.params.submissionId,
+      { status: 'rejected' },
+      { new: true }
+    );
     res.json({ success: true, message: 'Rejected!', submission });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
