@@ -23,7 +23,7 @@ router.post('/submit/:taskId', isAuthenticated, async (req, res) => {
       const taskData = await Task.findById(req.params.taskId);
       const newCount = (taskData.completedCount || 0) + 1;
       const newStatus = newCount >= taskData.workerLimit ? 'completed' : 'open';
-      await Task.findByIdAndUpdate(req.params.taskId, { completedCount: newCount, status: newStatus });
+      await Task.findByIdAndUpdate(req.params.taskId, { completedCount: newCount, status: newStatus, $inc: { claimedCount: -1 } });
       return res.json({ success: true, message: 'Work submitted!', submission: existing });
     }
     const submission = await Submission.create({
@@ -36,7 +36,7 @@ router.post('/submit/:taskId', isAuthenticated, async (req, res) => {
     const taskData = await Task.findById(req.params.taskId);
     const newCount = (taskData.completedCount || 0) + 1;
     const newStatus = newCount >= taskData.workerLimit ? 'completed' : 'open';
-    await Task.findByIdAndUpdate(req.params.taskId, { completedCount: newCount, status: newStatus });
+    await Task.findByIdAndUpdate(req.params.taskId, { completedCount: newCount, status: newStatus, $inc: { claimedCount: -1 } });
     res.json({ success: true, message: 'Work submitted!', submission });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
