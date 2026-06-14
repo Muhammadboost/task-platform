@@ -13,6 +13,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/worker', require('./routes/worker'));
 app.use('/api/submission', require('./routes/submission'));
 app.use('/api/payment', require('./routes/payment'));
+app.use('/api/upload', require('./routes/upload'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
