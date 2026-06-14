@@ -30,12 +30,37 @@ app.use('/api/worker', require('./routes/worker'));
 app.use('/api/submission', require('./routes/submission'));
 app.use('/api/payment', require('./routes/payment'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/support', require('./routes/support'));
+app.use('/api/chat', require('./routes/chat'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const http = require('http');
+const { Server } = require('socket.io');
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: '*', methods: ['GET', 'POST'] }
+});
+
+io.on('connection', (socket) => {
+  socket.on('join', (userData) => {
+    socket.userData = userData;
+  });
+  socket.on('sendMessage', async (data) => {
+    const Chat = require('./models/Chat');
+    const chat = await Chat.create({
+      sender: data.userId,
+      senderName: data.senderName,
+      senderRole: data.senderRole,
+      message: data.message
+    });
+    io.emit('newMessage', chat);
+  });
+});
+
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
