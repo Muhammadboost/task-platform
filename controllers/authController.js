@@ -25,6 +25,7 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ success: false, message: 'User not found' });
     const isMatch = await user.matchPassword(password);
+if (!user.isActive) return res.status(403).json({ success: false, message: 'Your account has been blocked. Contact admin.' });
     if (!isMatch) return res.status(400).json({ success: false, message: 'Wrong password' });
     const token = generateToken(user._id);
     res.json({ success: true, message: 'Login successful', token, user: { id: user._id, name: user.name, email: user.email, role: user.role, redditUsernames: user.redditUsernames } });
