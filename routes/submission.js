@@ -36,7 +36,7 @@ router.get('/my-submissions', isAuthenticated, async (req, res) => {
 
 router.get('/pending', isAuthenticated, async (req, res) => {
   try {
-    const submissions = await Submission.find({ status: 'submitted' }).populate('taskId', 'title budget').populate('workerId', 'name email');
+    const submissions = await Submission.find({ status: 'submitted' }).populate('taskId', 'title budget').populate('workerId', 'name email redditUsername')
     res.json({ success: true, submissions });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
