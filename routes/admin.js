@@ -149,3 +149,13 @@ router.get('/pending-clients', isAuthenticated, async (req, res) => {
     res.status(500).json({ success: false, message: err.message })
   }
 })
+
+router.get('/all-clients', isAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User')
+    const clients = await User.find({ role: 'client' }).select('name email phone clientRegion paymentStatus paymentProofUrl clientBalance createdAt').sort({ createdAt: -1 })
+    res.json({ success: true, clients })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
