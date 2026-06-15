@@ -8,8 +8,8 @@ router.post('/request', isAuthenticated, async (req, res) => {
   try {
     const { amount, accountNumber, accountType } = req.body;
 
-    if (!amount || amount < 500) {
-      return res.status(400).json({ success: false, message: 'Minimum withdrawal amount is Rs. 500!' });
+    if (!amount || amount < 250) {
+      return res.status(400).json({ success: false, message: 'Minimum withdrawal amount is Rs. 250!' });
     }
 
     const user = await User.findById(req.user.id);
