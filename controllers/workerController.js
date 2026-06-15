@@ -4,11 +4,11 @@ const User = require('../models/User');
 
 exports.getAvailableTasks = async (req, res) => {
   try {
-const workerUser = await User.findById(req.user.id);
-if (!workerUser.isApproved) {
-  return res.status(403).json({ success: false, message: 'Your account is pending approval!' });
-} 
-   const claimedTasks = await Submission.find({ workerId: req.user.id }).select('taskId');
+    const workerUser = await User.findById(req.user.id);
+    if (!workerUser.isApproved) {
+      return res.status(403).json({ success: false, message: 'Your account is pending approval!' });
+    }
+    const claimedTasks = await Submission.find({ workerId: req.user.id }).select('taskId');
     const claimedTaskIds = claimedTasks.map(s => s.taskId.toString());
     const tasks = await Task.find({
       status: 'open',
@@ -32,8 +32,8 @@ exports.claimTask = async (req, res) => {
     }
     const existing = await Submission.findOne({ taskId, workerId: req.user.id });
     if (existing) return res.status(400).json({ success: false, message: 'Already claimed!' });
-await Task.findByIdAndUpdate(taskId, { $inc: { claimedCount: 1 } }); 
-   const submission = await Submission.create({
+    await Task.findByIdAndUpdate(taskId, { $inc: { claimedCount: 1 } });
+    const submission = await Submission.create({
       taskId,
       workerId: req.user.id,
       status: 'claimed',
@@ -48,7 +48,8 @@ await Task.findByIdAndUpdate(taskId, { $inc: { claimedCount: 1 } });
 
 exports.getMyTasks = async (req, res) => {
   try {
-    const submissions = await Submission.find({ workerId: req.user.id }).populate('taskId');
+    const submissions = await Submission.find({ workerId: req.user.id })
+      .populate('taskId', 'title description budget currency exchangeRate commissionRate workerLimit completedCount refImageUrl taskType subreddit postTitle targetUsername commentContent commentText extraNotes');
     res.json({ success: true, tasks: submissions });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
