@@ -77,3 +77,27 @@ router.post('/update-currency', isAuthenticated, async (req, res) => {
     res.status(500).json({ success: false, message: err.message })
   }
 })
+
+router.post('/upload-payment-proof', isAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User')
+    const { proofUrl, amount } = req.body
+    await User.findByIdAndUpdate(req.user.id, {
+      paymentProofUrl: proofUrl,
+      paymentStatus: 'pending'
+    })
+    res.json({ success: true, message: 'Payment proof uploaded! Admin will verify shortly.' })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+router.get('/my-balance', isAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User')
+    const user = await User.findById(req.user.id).select('clientBalance clientRegion paymentStatus')
+    res.json({ success: true, clientBalance: user.clientBalance, clientRegion: user.clientRegion, paymentStatus: user.paymentStatus })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})

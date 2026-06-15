@@ -12,6 +12,10 @@ const userSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   isApproved: { type: Boolean, default: false },
   preferredCurrency: { type: String, enum: ['USD', 'PKR'], default: 'USD' },
+  clientRegion: { type: String, enum: ['PK', 'USA'], default: 'USA' },
+  clientBalance: { type: Number, default: 0 },
+  paymentProofUrl: { type: String, default: '' },
+  paymentStatus: { type: String, enum: ['unpaid', 'pending', 'active'], default: 'unpaid' },
   createdAt: { type: Date, default: Date.now }
 });
 userSchema.pre('save', async function(next) {

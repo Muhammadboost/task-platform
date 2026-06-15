@@ -125,3 +125,27 @@ router.post('/create-subadmin', isAuthenticated, async (req, res) => {
 });
 
 module.exports = router;
+
+router.post('/client-add-balance/:userId', isAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User')
+    const { amount } = req.body
+    const user = await User.findByIdAndUpdate(req.user.id !== req.params.userId ? req.params.userId : req.params.userId, {
+      $inc: { clientBalance: Number(amount) },
+      paymentStatus: 'active'
+    }, { new: true })
+    res.json({ success: true, message: `Rs. ${amount} added!`, clientBalance: user.clientBalance })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+router.get('/pending-clients', isAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User')
+    const clients = await User.find({ role: 'client', paymentStatus: 'pending' }).select('name email phone clientRegion paymentProofUrl clientBalance createdAt')
+    res.json({ success: true, clients })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
