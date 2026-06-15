@@ -6,17 +6,14 @@ const router = express.Router();
 
 router.post('/request', isAuthenticated, async (req, res) => {
   try {
-    const { amount, accountNumber, accountType } = req.body;
-
+    const { amount, accountNumber, accountType, accountName } = req.body;
     if (!amount || amount < 250) {
       return res.status(400).json({ success: false, message: 'Minimum withdrawal amount is Rs. 250!' });
     }
-
     const user = await User.findById(req.user.id);
     if (user.walletBalance < amount) {
       return res.status(400).json({ success: false, message: 'Insufficient balance!' });
     }
-
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     const recentRequest = await Payment.findOne({
       workerId: req.user.id,
@@ -28,11 +25,11 @@ router.post('/request', isAuthenticated, async (req, res) => {
       const days = Math.ceil((nextDate - Date.now()) / (1000 * 60 * 60 * 24))
       return res.status(400).json({ success: false, message: `You can only request once per week. Next request available in ${days} day(s).` })
     }
-
     const payment = await Payment.create({
       workerId: req.user.id,
       amount,
       accountNumber,
+      accountName: accountName || '',
       accountType,
       status: 'pending'
     });
@@ -45,7 +42,6 @@ router.post('/request', isAuthenticated, async (req, res) => {
 router.get('/my-requests', isAuthenticated, async (req, res) => {
   try {
     const payments = await Payment.find({ workerId: req.user.id }).sort({ createdAt: -1 });
-
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     const recentRequest = await Payment.findOne({
       workerId: req.user.id,
@@ -56,7 +52,6 @@ router.get('/my-requests', isAuthenticated, async (req, res) => {
     if (recentRequest) {
       nextWithdrawal = new Date(recentRequest.createdAt.getTime() + 7 * 24 * 60 * 60 * 1000)
     }
-
     res.json({ success: true, payments, nextWithdrawal });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
