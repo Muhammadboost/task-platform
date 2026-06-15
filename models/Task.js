@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const taskSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
@@ -9,13 +8,20 @@ const taskSchema = new mongoose.Schema({
   assignedWorkerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   deadline: Date,
   adminApproved: { type: Boolean, default: false },
-workerLimit: { type: Number, default: 1 },
-currency: { type: String, enum: ['USD', 'PKR'], default: 'USD' },
-exchangeRate: { type: Number, default: 280 },
-commissionRate: { type: Number, default: 50 },
-completedCount: { type: Number, default: 0 },
-claimedCount: { type: Number, default: 0 },
+  workerLimit: { type: Number, default: 1 },
+  currency: { type: String, enum: ['USD', 'PKR'], default: 'USD' },
+  exchangeRate: { type: Number, default: 280 },
+  commissionRate: { type: Number, default: 50 },
+  completedCount: { type: Number, default: 0 },
+  claimedCount: { type: Number, default: 0 },
+  taskType: { type: String, default: '' },
+  subreddit: { type: String, default: '' },
+  postTitle: { type: String, default: '' },
+  targetUsername: { type: String, default: '' },
+  commentContent: { type: String, default: '' },
+  commentText: { type: String, default: '' },
+  extraNotes: { type: String, default: '' },
+  refImageUrl: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
-
 module.exports = mongoose.model('Task', taskSchema);
