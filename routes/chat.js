@@ -28,3 +28,13 @@ router.post('/send', isAuthenticated, async (req, res) => {
 });
 
 module.exports = router;
+
+router.delete('/message/:msgId', isAuthenticated, async (req, res) => {
+  try {
+    const Chat = require('../models/Chat')
+    await Chat.findByIdAndDelete(req.params.msgId)
+    res.json({ success: true, message: 'Message deleted!' })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
