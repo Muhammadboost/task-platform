@@ -56,3 +56,24 @@ router.get('/stats', isAuthenticated, async (req, res) => {
 });
 
 module.exports = router;
+
+router.get('/profile', isAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User')
+    const user = await User.findById(req.user.id).select('-password')
+    res.json({ success: true, user })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+router.post('/update-currency', isAuthenticated, async (req, res) => {
+  try {
+    const User = require('../models/User')
+    const { preferredCurrency } = req.body
+    await User.findByIdAndUpdate(req.user.id, { preferredCurrency })
+    res.json({ success: true, message: 'Currency updated!' })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
